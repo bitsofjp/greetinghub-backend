@@ -1,15 +1,25 @@
-// index.js
+import cors from "cors";
+import express, { Application, Request, Response } from "express";
 
-import express from "express";
+import connectToMongo from "./DB/db.js";
+import authRoutes from "./routes/auth.routes.js";
 
-const app = express();
-const port = process.env.PORT ?? "9001";
+const app: Application = express();
+const PORT = Number(process.env.PORT ?? 3000);
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-  console.log("Response sent")
+await connectToMongo();
+
+//Middlewares
+app.use(cors());
+app.use(express.json());
+
+// Healthcheck
+app.get("/", (req: Request, res: Response) => {
+  res.send("API is working...");
 });
 
-app.listen(port, () => {
-  console.log(`This app listens on port ${port}`)
+app.use("/api", authRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${String(PORT)}`);
 });
