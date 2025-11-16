@@ -1,9 +1,10 @@
-import { signup } from "#controllers/auth.controller.js";
+import { signin, signup } from "#controllers/auth.controller.js";
 import { Router } from "express";
 
 const router = Router();
 
 router.post("/signup", signup);
+router.post("/signin", signin);
 
 router.get("/ping", (req, res) => {
   res.json({ message: "auth routes alive" });
