@@ -18,12 +18,6 @@ export const getMe = (req: AuthenticatedRequest, res: Response) => {
     }
 
     res.status(200).json({
-      // user: {
-      //   email: req.user.email,
-      //   id: req.user._id,
-      //   role: req.user.role,
-      //   verified: req.user.verified,
-      // },
       user: req.user,
     });
   } catch (error) {
