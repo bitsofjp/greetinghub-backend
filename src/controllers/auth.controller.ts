@@ -1,5 +1,6 @@
 import User from "#models/user.js";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
@@ -73,7 +74,7 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       {
         id: user._id,
         role: user.role,
@@ -82,9 +83,15 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
       { expiresIn: "1h" },
     );
 
+    const refreshToken = crypto.randomBytes(40).toString("hex");
+
+    user.refreshTokens.push(refreshToken);
+    await user.save();
+
     return res.status(200).json({
+      accessToken,
       message: "Login successful",
-      token,
+      refreshToken,
       user: {
         email: user.email,
         id: user._id,
