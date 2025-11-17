@@ -12,6 +12,7 @@ interface AuthUser {
   _id: string;
   email: string;
   role: "admin" | "user";
+  verified: boolean;
 }
 
 export const requireSignin = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -26,7 +27,7 @@ export const requireSignin = async (req: AuthenticatedRequest, res: Response, ne
 
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
-    const user = await User.findById(decoded.id).select("_id email role");
+    const user = await User.findById(decoded.id).select("_id email role verified createdAt");
 
     if (!user) {
       return res.status(401).json({ message: "Invalid token user" });
@@ -36,6 +37,7 @@ export const requireSignin = async (req: AuthenticatedRequest, res: Response, ne
       _id: String(user._id),
       email: user.email,
       role: user.role,
+      verified: user.verified,
     };
 
     next();
