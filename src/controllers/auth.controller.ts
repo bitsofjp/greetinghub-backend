@@ -30,29 +30,27 @@ export const signup = async (req: Request<Record<string, never>, Record<string, 
 
     const hash_password = await bcrypt.hash(password, 10);
 
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
     const newUser = new User({
       email,
       hash_password,
       role: role ?? "user",
+      verificationToken,
+      verificationTokenExpiry,
+      verified: false,
     });
 
     await newUser.save();
 
     return res.status(201).json({
-      message: "User registered successfully",
-      user: {
-        email: newUser.email,
-        id: newUser._id,
-        role: newUser.role,
-      },
+      message: "User registered. Please verify your email.",
+      userId: newUser._id,
+      verificationToken, // just for debugging, remove later
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown server error";
-
-    return res.status(500).json({
-      error: message,
-      message: "Signup failed",
-    });
+  } catch (error) {
+    res.status(500).json({ error, message: "Signup failed" });
   }
 };
 
@@ -67,6 +65,10 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
     const user = await User.findOne({ email }).exec();
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.verified) {
+      return res.status(403).json({ message: "Please verify your email before logging in." });
     }
 
     const isMatch = await user.authenticate(password);
