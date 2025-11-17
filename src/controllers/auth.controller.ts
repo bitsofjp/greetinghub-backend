@@ -1,4 +1,5 @@
 import User from "#models/user.js";
+import { sendEmail } from "#utils/sendEmail.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { Request, Response } from "express";
@@ -43,6 +44,20 @@ export const signup = async (req: Request<Record<string, never>, Record<string, 
     });
 
     await newUser.save();
+
+    const frontendUrl = process.env.FRONTEND_URL ?? "";
+    const verifyUrl = `${frontendUrl}/verify?token=${verificationToken}`;
+
+    await sendEmail(
+      email,
+      "Verify your GreetingHub account",
+      `
+        <p>Welcome!</p>
+        <p>Please click the link below to verify your account:</p>
+        <a href="${verifyUrl}">${verifyUrl}</a>
+        <p>This link expires in 1 hour.</p>
+      `,
+    );
 
     return res.status(201).json({
       message: "User registered. Please verify your email.",
