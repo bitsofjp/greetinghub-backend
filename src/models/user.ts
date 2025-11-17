@@ -7,6 +7,8 @@ export interface IUser extends Document {
   googleId?: string;
   hash_password: string;
   refreshTokens: string[];
+  resetPasswordExpiry?: Date;
+  resetPasswordToken?: string;
   role: "admin" | "user";
   verificationToken?: string;
   verificationTokenExpiry?: Date;
