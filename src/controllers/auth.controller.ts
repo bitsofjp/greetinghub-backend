@@ -62,7 +62,6 @@ export const signup = async (req: Request<Record<string, never>, Record<string, 
     return res.status(201).json({
       message: "User registered. Please verify your email.",
       userId: newUser._id,
-      verificationToken, // just for debugging, remove later
     });
   } catch (error) {
     res.status(500).json({ error, message: "Signup failed" });

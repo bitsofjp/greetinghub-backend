@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export const sendEmail = async (to: string, subject: string, html: string) => {
+export const sendEmail = async (to: string, subject: string, html: string, text?: string) => {
   const transporter = nodemailer.createTransport({
     auth: {
       pass: process.env.EMAIL_PASS,
@@ -13,6 +13,7 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
     from: `"GreetingHub" <$process.env.EMAIL_USER>`,
     html,
     subject,
+    text,
     to,
   });
 };
