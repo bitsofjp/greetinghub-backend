@@ -8,6 +8,8 @@ export interface IUser extends Document {
   hash_password: string;
   refreshTokens: string[];
   role: "admin" | "user";
+  verificationToken?: string;
+  verificationTokenExpiry?: Date;
   verified: boolean;
 }
 
@@ -38,6 +40,12 @@ const userSchema = new mongoose.Schema<IUser>(
       default: "user",
       enum: ["user", "admin"],
       type: String,
+    },
+    verificationToken: {
+      type: String,
+    },
+    verificationTokenExpiry: {
+      type: Date,
     },
     verified: {
       default: false,
