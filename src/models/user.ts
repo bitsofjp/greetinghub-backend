@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   googleId?: string;
   hash_password: string;
+  refreshTokens: string[];
   role: "admin" | "user";
   verified: boolean;
 }
@@ -29,12 +30,15 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
     },
 
+    refreshTokens: {
+      default: [],
+      type: [String],
+    },
     role: {
       default: "user",
       enum: ["user", "admin"],
       type: String,
     },
-
     verified: {
       default: false,
       type: Boolean,
