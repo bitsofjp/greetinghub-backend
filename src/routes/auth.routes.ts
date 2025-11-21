@@ -1,4 +1,5 @@
 import { signin, signup } from "#controllers/auth.controller.js";
+import { googleLogin } from "#controllers/google.controller.js";
 import { logout } from "#controllers/logout.controller.js";
 import { forgotPassword, resetPassword } from "#controllers/password.controller.js";
 import { refreshToken } from "#controllers/refresh.controller.js";
@@ -19,6 +20,7 @@ router.post("/logout", logout);
 router.get("/verify-email", verifyEmail);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+router.post("/google", googleLogin);
 
 router.get("/ping", (req, res) => {
   res.json({ message: "auth routes alive" });

@@ -30,7 +30,9 @@ const userSchema = new mongoose.Schema<IUser>(
     },
 
     hash_password: {
-      required: true,
+      required: function (this: IUser) {
+        return !this.googleId;
+      },
       type: String,
     },
 
