@@ -240,6 +240,11 @@ export const changePassword = async (req: AuthenticatedRequest & { body: ChangeP
       user.passwordHistory?.push(user.hash_password);
     }
 
+    // Keep only last 10 stored passwords
+    if (user.passwordHistory?.length && user.passwordHistory.length > 10) {
+      user.passwordHistory = user.passwordHistory.slice(-10);
+    }
+
     user.hash_password = newHash;
     user.passwordSetAt = new Date();
 
