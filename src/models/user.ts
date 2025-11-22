@@ -7,7 +7,6 @@ export interface IUser extends Document {
 
   contactNumber?: string;
   createdAt: Date;
-  displayName: string;
 
   // Core identity
   email: string;
@@ -33,11 +32,6 @@ export interface IUser extends Document {
 const userSchema = new mongoose.Schema<IUser>(
   {
     contactNumber: {
-      type: String,
-    },
-    displayName: {
-      required: true,
-      trim: true,
       type: String,
     },
     email: {
