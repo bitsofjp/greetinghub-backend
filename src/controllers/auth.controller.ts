@@ -6,27 +6,38 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 interface SigninBody {
-  email: string;
+  identifier: string;
   password: string;
 }
 
 interface SignupBody {
   email: string;
   password: string;
-  role?: "admin" | "user";
+  username: string;
 }
 
 export const signup = async (req: Request<Record<string, never>, Record<string, never>, SignupBody>, res: Response) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, username } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+    if (!email || !password || !username) {
+      return res.status(400).json({ message: "Email, username and password are required" });
     }
 
-    const existingUser = await User.findOne({ email }).exec();
-    if (existingUser) {
-      return res.status(409).json({ message: "Email already registered" });
+    const normalizedUsername = username.trim().toLowerCase();
+
+    const existingUsername = await User.findOne({ username: normalizedUsername }).exec();
+    if (existingUsername) {
+      return res.status(409).json({
+        message: "Username already taken",
+      });
+    }
+
+    const existingEmail = await User.findOne({ email }).exec();
+    if (existingEmail) {
+      return res.status(409).json({
+        message: "Email already registered",
+      });
     }
 
     const hash_password = await bcrypt.hash(password, 10);
@@ -35,9 +46,11 @@ export const signup = async (req: Request<Record<string, never>, Record<string, 
     const verificationTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     const newUser = new User({
+      displayName: normalizedUsername,
       email,
       hash_password,
-      role: role ?? "user",
+      role: "user",
+      username: normalizedUsername,
       verificationToken,
       verificationTokenExpiry,
       verified: false,
@@ -70,13 +83,18 @@ export const signup = async (req: Request<Record<string, never>, Record<string, 
 
 export const signin = async (req: Request<Record<string, never>, Record<string, never>, SigninBody>, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+    if (!identifier || !password) {
+      return res.status(400).json({ message: "Email or username and password are required" });
     }
 
-    const user = await User.findOne({ email }).exec();
+    const normalizedIdentifier = identifier.trim().toLowerCase();
+
+    const user = await User.findOne({
+      $or: [{ email: normalizedIdentifier }, { username: normalizedIdentifier }],
+    }).exec();
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -87,13 +105,14 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
 
     const isMatch = await user.authenticate(password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid email/username or password" });
     }
 
     const accessToken = jwt.sign(
       {
         id: user._id,
         role: user.role,
+        username: user.username ?? null,
       },
       process.env.JWT_SECRET ?? "default_secret",
       { expiresIn: "1h" },
@@ -112,6 +131,8 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
         email: user.email,
         id: user._id,
         role: user.role,
+        username: user.username,
+        verified: user.verified,
       },
     });
   } catch (error) {
