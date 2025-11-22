@@ -1,5 +1,6 @@
 import User from "#models/user.js";
 import { sendEmail } from "#utils/sendEmail.js";
+import { serializeUser } from "#utils/serializer.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { Request, Response } from "express";
@@ -46,7 +47,6 @@ export const signup = async (req: Request<Record<string, never>, Record<string, 
     const verificationTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     const newUser = new User({
-      displayName: normalizedUsername,
       email,
       hash_password,
       role: "user",
@@ -127,13 +127,7 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
       accessToken,
       message: "Login successful",
       refreshToken,
-      user: {
-        email: user.email,
-        id: user._id,
-        role: user.role,
-        username: user.username,
-        verified: user.verified,
-      },
+      user: serializeUser(user),
     });
   } catch (error) {
     res.status(500).json({

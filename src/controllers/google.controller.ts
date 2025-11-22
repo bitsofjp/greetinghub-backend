@@ -1,5 +1,6 @@
 import User from "#models/user.js";
 import { verifyGoogleToken } from "#utils/googleAuth.js";
+import { serializeUser } from "#utils/serializer.js";
 import crypto from "crypto";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
@@ -52,7 +53,7 @@ export const googleLogin = async (req: Request<Record<string, never>, Record<str
       accessToken,
       message: "Google login successful",
       refreshToken,
-      user,
+      user: serializeUser(user),
     });
   } catch (error) {
     return res.status(500).json({

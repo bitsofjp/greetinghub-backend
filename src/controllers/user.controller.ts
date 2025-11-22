@@ -1,5 +1,6 @@
 import { AuthenticatedRequest } from "#middlewares/auth.middleware.js";
 import User from "#models/user.js";
+import { serializeUser } from "#utils/serializer.js";
 import { Response } from "express";
 
 export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
@@ -11,16 +12,27 @@ export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const getMe = (req: AuthenticatedRequest, res: Response) => {
+export const getMe = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    if (!req.user) {
+    if (!req.user?._id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await User.findById(req.user._id)
+      .select("-hash_password -refreshTokens -verificationToken -verificationTokenExpiry -resetPasswordToken -resetPasswordExpiry -__v")
+      .exec();
+
+    if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     res.status(200).json({
-      user: req.user,
+      user: serializeUser(user),
     });
   } catch (error) {
-    res.status(500).json({ error, message: "Failed to fetch user profile" });
+    res.status(500).json({
+      error,
+      message: "Failed to fetch user profile",
+    });
   }
 };

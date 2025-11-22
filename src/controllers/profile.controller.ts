@@ -1,5 +1,6 @@
 import { AuthenticatedRequest } from "#middlewares/auth.middleware.js";
 import User from "#models/user.js";
+import { serializeUser } from "#utils/serializer.js";
 import { Response } from "express";
 
 interface UpdateProfileBody {
@@ -26,15 +27,15 @@ export const updateProfile = async (req: AuthenticatedRequest & { body: UpdatePr
     if (contactNumber) updates.contactNumber = contactNumber;
     if (profilePicture) updates.profilePicture = profilePicture;
 
-    const updated = await User.findByIdAndUpdate(
-      req.user._id,
-      { $set: updates },
-      { new: true, select: "_id email username contactNumber profilePicture role verified createdAt" },
-    );
+    const updated = await User.findByIdAndUpdate(req.user._id, { $set: updates }, { new: true }).exec();
 
-    res.status(200).json({
+    if (!updated) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
       message: "Profile updated",
-      user: updated,
+      user: serializeUser(updated),
     });
   } catch (error) {
     res.status(500).json({
