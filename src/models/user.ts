@@ -3,13 +3,18 @@ import mongoose, { Document, Model } from "mongoose";
 
 export interface IUser extends Document {
   authenticate(password: string): Promise<boolean>;
+  contactNumber?: string;
+  createdAt: Date;
   email: string;
   googleId?: string;
   hash_password: string;
+  profilePicture?: string;
   refreshTokens: string[];
   resetPasswordExpiry?: Date;
   resetPasswordToken?: string;
   role: "admin" | "user";
+  updatedAt: Date;
+  username: string;
   verificationToken?: string;
   verificationTokenExpiry?: Date;
   verified: boolean;
@@ -17,6 +22,10 @@ export interface IUser extends Document {
 
 const userSchema = new mongoose.Schema<IUser>(
   {
+    contactNumber: {
+      type: String,
+    },
+
     email: {
       lowercase: true,
       required: true,
@@ -35,7 +44,9 @@ const userSchema = new mongoose.Schema<IUser>(
       },
       type: String,
     },
-
+    profilePicture: {
+      type: String,
+    },
     refreshTokens: {
       default: [],
       type: [String],
@@ -51,12 +62,20 @@ const userSchema = new mongoose.Schema<IUser>(
       enum: ["user", "admin"],
       type: String,
     },
+    username: {
+      lowercase: true,
+      required: true,
+      trim: true,
+      type: String,
+      unique: true,
+    },
     verificationToken: {
       type: String,
     },
     verificationTokenExpiry: {
       type: Date,
     },
+
     verified: {
       default: false,
       type: Boolean,

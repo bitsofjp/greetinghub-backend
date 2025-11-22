@@ -2,6 +2,7 @@ import { signin, signup } from "#controllers/auth.controller.js";
 import { googleLogin } from "#controllers/google.controller.js";
 import { logout } from "#controllers/logout.controller.js";
 import { forgotPassword, resetPassword } from "#controllers/password.controller.js";
+import { updateProfile } from "#controllers/profile.controller.js";
 import { refreshToken } from "#controllers/refresh.controller.js";
 import { getAllUsers, getMe } from "#controllers/user.controller.js";
 import { verifyEmail } from "#controllers/verify.controller.js";
@@ -21,6 +22,7 @@ router.get("/verify-email", verifyEmail);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/google", googleLogin);
+router.patch("/me", requireSignin, updateProfile);
 
 router.get("/ping", (req, res) => {
   res.json({ message: "auth routes alive" });
