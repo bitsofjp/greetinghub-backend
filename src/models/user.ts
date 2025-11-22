@@ -52,7 +52,6 @@ const userSchema = new mongoose.Schema<IUser>(
       required: function (this: IUser) {
         return !this.googleId;
       },
-      select: false,
       type: String,
     },
 
@@ -76,7 +75,6 @@ const userSchema = new mongoose.Schema<IUser>(
 
     refreshTokens: {
       default: [],
-      select: false,
       type: [String],
     },
 

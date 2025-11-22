@@ -1,3 +1,4 @@
+import { AuthenticatedRequest } from "#middlewares/auth.middleware.js";
 import User from "#models/user.js";
 import { sendEmail } from "#utils/sendEmail.js";
 import bcrypt from "bcryptjs";
@@ -10,6 +11,9 @@ interface ForgotPasswordBody {
 interface ResetPasswordBody {
   newPassword: string;
   token: string;
+}
+interface SetPasswordBody {
+  newPassword: string;
 }
 
 export const forgotPassword = async (req: Request<Record<string, never>, Record<string, never>, ForgotPasswordBody>, res: Response) => {
@@ -99,6 +103,62 @@ export const resetPassword = async (req: Request<Record<string, never>, Record<s
     return res.status(500).json({
       error,
       message: "Failed to reset password",
+    });
+  }
+};
+
+export const setPassword = async (req: AuthenticatedRequest & { body: SetPasswordBody }, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const { newPassword } = req.body as SetPasswordBody;
+
+    if (!newPassword) {
+      return res.status(400).json({ message: "New password is required" });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        message: "Password must be at least 8 characters",
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.hasPassword()) {
+      return res.status(400).json({
+        message: "Password already set. Update password instead.",
+      });
+    }
+    // console.log(newPassword);
+    // console.log(bcrypt.hash(newPassword, 10));
+    // console.log(user.hash_password);
+    // console.log(user.email);
+    // console.log("lkhkglkghkl")
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    if (user.hash_password) {
+      user.passwordHistory?.push(user.hash_password);
+    }
+
+    user.hash_password = hashed;
+    user.passwordSetAt = new Date();
+
+    user.refreshTokens = [];
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password set successfully. Please log in again.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error,
+      message: "Failed to set password",
     });
   }
 };

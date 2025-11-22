@@ -95,6 +95,14 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
       $or: [{ email: normalizedIdentifier }, { username: normalizedIdentifier }],
     }).exec();
 
+    console.log(user);
+    // console.log(newPassword);
+    // console.log(bcrypt.hash(newPassword, 10));
+    // console.log(user.hash_password);
+    // console.log(user.email);
+    console.log(user?.email);
+    console.log(user?.hash_password);
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -119,9 +127,11 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
     );
 
     const refreshToken = crypto.randomBytes(40).toString("hex");
+    console.log("bru bruh");
 
     user.refreshTokens.push(refreshToken);
     await user.save();
+    console.log("hey hehy hey");
 
     return res.status(200).json({
       accessToken,
