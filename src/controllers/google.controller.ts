@@ -19,34 +19,63 @@ export const googleLogin = async (req: Request<Record<string, never>, Record<str
       return res.status(400).json({ message: "Google ID token is required" });
     }
 
+    // 1. Verify Google token
     const payload = await verifyGoogleToken(idToken);
 
-    console.log(payload);
-
-    if (!payload?.email) {
+    if (!payload?.email || !payload.sub) {
       return res.status(401).json({ message: "Google token invalid" });
     }
 
     const { email, sub: googleId } = payload;
 
-    let user = await User.findOne({ email });
+    // 2. Find existing user by email
+    let user = await User.findOne({ email }).exec();
 
     if (!user) {
+      // -----------------------------
+      // CASE A: New Google user
+      // -----------------------------
       user = new User({
         email,
         googleId,
-        hash_password: "",
-        verified: true,
+        hash_password: "", // No password for Google accounts
+        verified: true, // Google = trusted provider
       });
 
       await user.save();
+    } else {
+      // -----------------------------
+      // CASE B: Email already exists
+      // -----------------------------
+      if (!user.googleId) {
+        // Link Google to existing email/password account
+        user.googleId = googleId;
+        user.verified = true;
+
+        await user.save();
+      } else if (user.googleId !== googleId) {
+        // -----------------------------
+        // CASE C: Mismatch (Security Issue)
+        // -----------------------------
+        return res.status(401).json({
+          message: "Google account does not match the existing user",
+        });
+      }
+      // Otherwise → CASE D: googleId matches → normal login
     }
 
+    // 3. Generate access token
     const accessToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: "15m" });
 
+    // 4. Refresh token rotation
     const refreshToken = crypto.randomBytes(40).toString("hex");
-
     user.refreshTokens.push(refreshToken);
+
+    // Optional: limit token array size (max 5 tokens)
+    if (user.refreshTokens.length > 5) {
+      user.refreshTokens = user.refreshTokens.slice(-5);
+    }
+
     await user.save();
 
     return res.status(200).json({
