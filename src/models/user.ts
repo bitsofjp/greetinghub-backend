@@ -3,27 +3,24 @@ import mongoose, { Document, Model } from "mongoose";
 
 export interface IUser extends Document {
   authenticate(password: string): Promise<boolean>;
-
   contactNumber?: string;
   createdAt: Date;
   email: string;
-
+  failedLoginAttempts: number;
   googleId?: string;
-
   hash_password?: string; // <-- optional for Google login
+  hasPassword(): boolean;
+  lockUntil?: Date | null;
+  passwordHistory?: string[];
+  passwordSetAt?: Date;
   profilePicture?: string;
-
   refreshTokens: string[];
   resetPasswordExpiry?: Date;
-
   resetPasswordToken?: string;
-
   role: "admin" | "user";
   updatedAt: Date;
-
   username?: null | string;
   verificationToken?: string;
-
   verificationTokenExpiry?: Date;
   verified: boolean;
 }
@@ -42,6 +39,11 @@ const userSchema = new mongoose.Schema<IUser>(
       unique: true,
     },
 
+    failedLoginAttempts: {
+      default: 0,
+      type: Number,
+    },
+
     googleId: {
       type: String,
     },
@@ -52,6 +54,20 @@ const userSchema = new mongoose.Schema<IUser>(
       },
       select: false,
       type: String,
+    },
+
+    lockUntil: {
+      default: null,
+      type: Date,
+    },
+
+    passwordHistory: {
+      default: [],
+      type: [String],
+    },
+
+    passwordSetAt: {
+      type: Date,
     },
 
     profilePicture: {
@@ -108,6 +124,10 @@ const userSchema = new mongoose.Schema<IUser>(
 
 userSchema.methods.authenticate = async function (this: IUser, password: string) {
   return bcrypt.compare(password, this.hash_password ?? "");
+};
+
+userSchema.methods.hasPassword = function (this: IUser) {
+  return Boolean(this.hash_password && this.hash_password.length > 0);
 };
 
 const User: Model<IUser> = mongoose.model<IUser>("User", userSchema);
