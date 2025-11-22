@@ -5,6 +5,10 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { Request, Response } from "express";
 
+interface ChangePasswordBody {
+  newPassword: string;
+  oldPassword: string;
+}
 interface ForgotPasswordBody {
   email: string;
 }
@@ -12,6 +16,7 @@ interface ResetPasswordBody {
   newPassword: string;
   token: string;
 }
+
 interface SetPasswordBody {
   newPassword: string;
 }
@@ -133,11 +138,6 @@ export const setPassword = async (req: AuthenticatedRequest & { body: SetPasswor
         message: "Password already set. Update password instead.",
       });
     }
-    // console.log(newPassword);
-    // console.log(bcrypt.hash(newPassword, 10));
-    // console.log(user.hash_password);
-    // console.log(user.email);
-    // console.log("lkhkglkghkl")
 
     const hashed = await bcrypt.hash(newPassword, 10);
 
@@ -159,6 +159,102 @@ export const setPassword = async (req: AuthenticatedRequest & { body: SetPasswor
     return res.status(500).json({
       error,
       message: "Failed to set password",
+    });
+  }
+};
+
+export const changePassword = async (req: AuthenticatedRequest & { body: ChangePasswordBody }, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const { newPassword, oldPassword } = req.body as ChangePasswordBody;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "oldPassword and newPassword are required" });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        message: "Password must be at least 8 characters",
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check account lockout
+    if (user.lockUntil && user.lockUntil > new Date()) {
+      return res.status(423).json({
+        message: "Account locked due to too many failed attempts. Try again later.",
+      });
+    }
+
+    // Cannot change password if none exists
+    if (!user.hasPassword()) {
+      return res.status(400).json({
+        message: "No existing password. Use set password instead.",
+      });
+    }
+
+    // Validate old password
+    const isMatch = await user.authenticate(oldPassword);
+    if (!isMatch) {
+      user.failedLoginAttempts += 1;
+
+      // Lockout threshold
+      if (user.failedLoginAttempts >= 5) {
+        user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      }
+
+      await user.save();
+
+      return res.status(401).json({
+        message: "Incorrect old password",
+      });
+    }
+
+    // Reset lock + failed attempts on success
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+
+    if (user.passwordHistory?.length) {
+      const recentHashes = user.passwordHistory.slice(-5); // last 5
+
+      for (const oldHash of recentHashes) {
+        const isReuse = await bcrypt.compare(newPassword, oldHash);
+        if (isReuse) {
+          return res.status(400).json({
+            message: "New password cannot be the same as your last 5 passwords.",
+          });
+        }
+      }
+    }
+
+    // Hash new password
+    const newHash = await bcrypt.hash(newPassword, 10);
+
+    // Store previous password in history
+    if (user.hash_password) {
+      user.passwordHistory?.push(user.hash_password);
+    }
+
+    user.hash_password = newHash;
+    user.passwordSetAt = new Date();
+
+    // Invalidate all refresh tokens → force re-login everywhere
+    user.refreshTokens = [];
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password changed successfully. Please log in again.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error,
+      message: "Failed to change password",
     });
   }
 };
