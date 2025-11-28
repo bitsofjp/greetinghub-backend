@@ -27,10 +27,21 @@ export const requireSignin = async (req: AuthenticatedRequest, res: Response, ne
 
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
-    const user = await User.findById(decoded.id).select("_id email role verified createdAt");
+    const user = await User.findById(decoded.id).select("_id email role verified createdAt passwordSetAt username");
 
     if (!user) {
       return res.status(401).json({ message: "Invalid token user" });
+    }
+
+    // Invalidate old tokens after password change
+    if (user.passwordSetAt) {
+      const tokenIssuedAtMs = (decoded.iat ?? 0) * 1000;
+
+      if (tokenIssuedAtMs < user.passwordSetAt.getTime()) {
+        return res.status(401).json({
+          message: "Token invalid due to recent password change. Please sign in again.",
+        });
+      }
     }
 
     req.user = {
