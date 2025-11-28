@@ -69,11 +69,17 @@ export const googleLogin = async (req: Request<Record<string, never>, Record<str
 
     // 4. Refresh token rotation
     const refreshToken = crypto.randomBytes(40).toString("hex");
-    user.refreshTokens.push(refreshToken);
+    user.sessions.push({
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      ip: req.ip,
+      token: refreshToken,
+      userAgent: req.headers["user-agent"] ?? "unknown",
+    });
 
     // Optional: limit token array size (max 5 tokens)
-    if (user.refreshTokens.length > 5) {
-      user.refreshTokens = user.refreshTokens.slice(-5);
+    if (user.sessions.length > 5) {
+      user.sessions = user.sessions.slice(-5);
     }
 
     await user.save();

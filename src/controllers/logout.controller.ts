@@ -13,12 +13,16 @@ export const logout = async (req: Request<Record<string, never>, Record<string, 
       return res.status(400).json({ message: "Refresh token required" });
     }
 
-    const user = await User.findOne({ refreshTokens: refreshToken });
+    // Find user with the matching session token
+    const user = await User.findOne({ "sessions.token": refreshToken });
+
     if (!user) {
+      // Even if the token doesn't exist, logout is "successful"
       return res.status(200).json({ message: "Logged out successfully" });
     }
 
-    user.refreshTokens = user.refreshTokens.filter((t) => t !== refreshToken);
+    // Remove the session
+    user.sessions = user.sessions.filter((session) => session.token !== refreshToken);
 
     await user.save();
 

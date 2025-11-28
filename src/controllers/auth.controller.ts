@@ -123,7 +123,14 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
 
     const refreshToken = crypto.randomBytes(40).toString("hex");
 
-    user.refreshTokens.push(refreshToken);
+    user.sessions.push({
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      ip: req.ip,
+      token: refreshToken,
+      userAgent: req.headers["user-agent"] ?? "unknown",
+    });
+
     await user.save();
 
     return res.status(200).json({

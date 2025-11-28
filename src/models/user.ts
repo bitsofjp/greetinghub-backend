@@ -15,15 +15,23 @@ export interface IUser extends Document {
   passwordHistory?: string[];
   passwordSetAt?: Date;
   profilePicture?: string;
-  refreshTokens: string[];
   resetPasswordExpiry?: Date;
   resetPasswordToken?: string;
   role: "admin" | "user";
+  sessions: ISession[];
   updatedAt: Date;
   username?: null | string;
   verificationToken?: string;
   verificationTokenExpiry?: Date;
   verified: boolean;
+}
+interface ISession {
+  _id?: string;
+  createdAt: Date;
+  expiresAt: Date;
+  ip?: string;
+  token: string;
+  userAgent?: string;
 }
 
 const userSchema = new mongoose.Schema<IUser>(
@@ -78,11 +86,6 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
     },
 
-    refreshTokens: {
-      default: [],
-      type: [String],
-    },
-
     resetPasswordExpiry: {
       select: false,
       type: Date,
@@ -98,6 +101,16 @@ const userSchema = new mongoose.Schema<IUser>(
       enum: ["user", "admin"],
       type: String,
     },
+
+    sessions: [
+      {
+        createdAt: { default: Date.now, type: Date },
+        expiresAt: { required: true, type: Date },
+        ip: { type: String },
+        token: { required: true, type: String },
+        userAgent: { type: String },
+      },
+    ],
 
     username: {
       lowercase: true,
@@ -116,7 +129,6 @@ const userSchema = new mongoose.Schema<IUser>(
       select: false,
       type: Date,
     },
-
     verified: {
       default: false,
       type: Boolean,
