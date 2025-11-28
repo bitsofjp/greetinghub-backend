@@ -4,7 +4,7 @@ import { logout } from "#controllers/logout.controller.js";
 import { changePassword, forgotPassword, resetPassword, setPassword } from "#controllers/password.controller.js";
 import { updateProfile } from "#controllers/profile.controller.js";
 import { refreshToken } from "#controllers/refresh.controller.js";
-import { deleteSession, listSessions } from "#controllers/session.controller.js";
+import { deleteSession, listSessions, logoutCurrentSession } from "#controllers/session.controller.js";
 import { getAllUsers, getMe } from "#controllers/user.controller.js";
 import { verifyEmail } from "#controllers/verify.controller.js";
 import { checkAdmin, requireSignin } from "#middlewares/auth.middleware.js";
@@ -29,6 +29,7 @@ router.post("/set-password", requireSignin, setPassword);
 router.post("/change-password", requireSignin, changePassword);
 router.get("/sessions", requireSignin, listSessions);
 router.delete("/sessions/:sessionId", requireSignin, deleteSession);
+router.post("/logout", logoutCurrentSession);
 
 router.get("/ping", (req, res) => {
   res.json({ message: "auth routes alive" });

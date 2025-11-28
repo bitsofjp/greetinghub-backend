@@ -1,6 +1,10 @@
 import { AuthenticatedRequest } from "#middlewares/auth.middleware.js";
 import User from "#models/user.js";
-import { Response } from "express";
+import { Request, Response } from "express";
+
+interface LogoutBody {
+  refreshToken: string;
+}
 
 export const listSessions = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -54,6 +58,36 @@ export const deleteSession = async (req: AuthenticatedRequest, res: Response) =>
     return res.status(500).json({
       error,
       message: "Failed to delete session",
+    });
+  }
+};
+
+export const logoutCurrentSession = async (req: Request<Record<string, never>, Record<string, never>, LogoutBody>, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ message: "Refresh token required" });
+    }
+
+    const user = await User.findOne({ "sessions.token": refreshToken });
+
+    if (!user) {
+      return res.status(403).json({ message: "Invalid session or already logged out" });
+    }
+
+    // Remove only this session
+    user.sessions = user.sessions.filter((s) => s.token !== refreshToken);
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Logged out from this device",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error,
+      message: "Failed to logout session",
     });
   }
 };
