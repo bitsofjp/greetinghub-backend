@@ -6,11 +6,14 @@ import crypto from "crypto";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
+interface ResendVerificationBody {
+  email: string;
+}
+
 interface SigninBody {
   identifier: string;
   password: string;
 }
-
 interface SignupBody {
   email: string;
   password: string;
@@ -133,6 +136,66 @@ export const signin = async (req: Request<Record<string, never>, Record<string, 
     res.status(500).json({
       error,
       message: "Signin failed",
+    });
+  }
+};
+
+export const resendVerification = async (req: Request<Record<string, never>, Record<string, never>, ResendVerificationBody>, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email }).exec();
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.verified) {
+      return res.status(400).json({ message: "Email is already verified" });
+    }
+
+    // Anti-spam: allow only once every 60 seconds
+    const now = new Date();
+    if (user.lastVerificationEmailSentAt && now.getTime() - user.lastVerificationEmailSentAt.getTime() < 60_000) {
+      return res.status(429).json({
+        message: "Please wait before requesting another verification email.",
+      });
+    }
+
+    // Generate a new token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpiry = verificationTokenExpiry;
+    user.lastVerificationEmailSentAt = new Date();
+    await user.save();
+
+    const frontendUrl = process.env.FRONTEND_URL ?? "";
+    const verifyUrl = `${frontendUrl}/verify?token=${verificationToken}`;
+
+    await sendEmail(
+      email,
+      "Your verification link",
+      `
+      <p>You requested a new verification link.</p>
+      <p>Click below to verify your account:</p>
+      <a href="${verifyUrl}">${verifyUrl}</a>
+      <p>This link expires in 1 hour.</p>
+      `,
+    );
+
+    return res.status(200).json({
+      message: "Verification email resent.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error,
+      message: "Failed to resend verification email",
     });
   }
 };

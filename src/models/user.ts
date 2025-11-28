@@ -10,6 +10,7 @@ export interface IUser extends Document {
   googleId?: string;
   hash_password?: string; // <-- optional for Google login
   hasPassword(): boolean;
+  lastVerificationEmailSentAt?: Date;
   lockUntil?: Date | null;
   passwordHistory?: string[];
   passwordSetAt?: Date;
@@ -53,6 +54,10 @@ const userSchema = new mongoose.Schema<IUser>(
         return !this.googleId;
       },
       type: String,
+    },
+
+    lastVerificationEmailSentAt: {
+      type: Date,
     },
 
     lockUntil: {
