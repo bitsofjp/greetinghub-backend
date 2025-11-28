@@ -148,7 +148,7 @@ export const setPassword = async (req: AuthenticatedRequest & { body: SetPasswor
     user.hash_password = hashed;
     user.passwordSetAt = new Date();
 
-    user.refreshTokens = [];
+    user.sessions = [];
 
     await user.save();
 
@@ -249,7 +249,7 @@ export const changePassword = async (req: AuthenticatedRequest & { body: ChangeP
     user.passwordSetAt = new Date();
 
     // Invalidate all refresh tokens → force re-login everywhere
-    user.refreshTokens = [];
+    user.sessions = [];
 
     await user.save();
 
