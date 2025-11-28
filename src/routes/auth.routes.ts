@@ -7,21 +7,22 @@ import { refreshToken } from "#controllers/refresh.controller.js";
 import { getAllUsers, getMe } from "#controllers/user.controller.js";
 import { verifyEmail } from "#controllers/verify.controller.js";
 import { checkAdmin, requireSignin } from "#middlewares/auth.middleware.js";
+import { googleLimiter, resetLimiter, signinLimiter, signupLimiter } from "#middlewares/rateLimit.js";
 import { Router } from "express";
 
 const router = Router();
 
-router.post("/signup", signup);
-router.post("/signin", signin);
+router.post("/signin", signinLimiter, signin);
+router.post("/signup", signupLimiter, signup);
 
 router.get("/me", requireSignin, getMe);
 router.get("/users", requireSignin, checkAdmin, getAllUsers);
 router.post("/refresh", refreshToken);
 router.post("/logout", logout);
 router.get("/verify-email", verifyEmail);
-router.post("/forgot-password", forgotPassword);
+router.post("/forgot-password", resetLimiter, forgotPassword);
 router.post("/reset-password", resetPassword);
-router.post("/google", googleLogin);
+router.post("/google", googleLimiter, googleLogin);
 router.patch("/me", requireSignin, updateProfile);
 router.post("/set-password", requireSignin, setPassword);
 router.post("/change-password", requireSignin, changePassword);
