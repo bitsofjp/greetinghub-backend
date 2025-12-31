@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Google OAuth Test</title>
+
+    <!-- Google Identity Services (GIS) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 40px;
+        max-width: 600px;
+        margin: auto;
+      }
+      h1 {
+        margin-bottom: 10px;
+      }
+      #log {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f4f4f4;
+        border-radius: 5px;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Google OAuth Test</h1>
+    <p>Click the button below to log in using your Google account.</p>
+
+    <!-- Google Login Config -->
+    <div
+      id="g_id_onload"
+      data-client_id="807905308998-3e4d04vu1f4p64rq6qdt20njope2up72.apps.googleusercontent.com"
+      data-context="signin"
+      data-callback="handleCredentialResponse"
+      data-auto_prompt="false"
+    ></div>
+
+    <!-- Google Sign-In Button -->
+    <div
+      class="g_id_signin"
+      data-type="standard"
+      data-shape="rectangular"
+      data-theme="outline"
+      data-text="signin_with"
+      data-size="large"
+      data-logo_alignment="left"
+    ></div>
+
+    <h3>Logs:</h3>
+    <div id="log">Waiting...</div>
+
+    <script>
+      function log(msg) {
+        document.getElementById("log").textContent = msg;
+        console.log(msg);
+      }
+
+      async function handleCredentialResponse(response) {
+        const idToken = response.credential;
+        log("Got Google ID Token:\n" + idToken);
+
+        try {
+          const backendRes = await fetch("http://localhost:3000/api/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken }),
+          });
+
+          const data = await backendRes.json();
+          log("Backend Response:\n" + JSON.stringify(data, null, 2));
+        } catch (err) {
+          log("Error calling backend:\n" + err.message);
+        }
+      }
+    </script>
+  </body>
+</html>

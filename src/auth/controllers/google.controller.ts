@@ -1,6 +1,6 @@
-import User from "#models/user.js";
-import { verifyGoogleToken } from "#utils/googleAuth.js";
-import { serializeUser } from "#utils/serializer.js";
+import User from "#auth/models/user.js";
+import { verifyGoogleToken } from "#auth/utils/googleAuth.js";
+import { serializeUser } from "#auth/utils/serializer.js";
 import crypto from "crypto";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";

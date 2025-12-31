@@ -1,6 +1,6 @@
-import { AuthenticatedRequest } from "#middlewares/auth.middleware.js";
-import User from "#models/user.js";
-import { sendEmail } from "#utils/sendEmail.js";
+import { AuthenticatedRequest } from "#auth/middlewares/auth.middleware.js";
+import User from "#auth/models/user.js";
+import { sendEmail } from "#auth/utils/sendEmail.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { Request, Response } from "express";

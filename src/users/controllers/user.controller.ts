@@ -1,6 +1,6 @@
-import { AuthenticatedRequest } from "#middlewares/auth.middleware.js";
-import User from "#models/user.js";
-import { serializeUser } from "#utils/serializer.js";
+import { AuthenticatedRequest } from "#auth/middlewares/auth.middleware.js";
+import User from "#auth/models/user.js";
+import { serializeUser } from "#auth/utils/serializer.js";
 import { Response } from "express";
 
 export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {

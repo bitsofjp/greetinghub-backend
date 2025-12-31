@@ -1,4 +1,4 @@
-import User from "#models/user.js";
+import User from "#auth/models/user.js";
 import { Request, Response } from "express";
 
 interface LogoutRequestBody {
