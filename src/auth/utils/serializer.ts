@@ -1,4 +1,4 @@
-import { IUser } from "#models/user.js";
+import { IUser } from "#auth/models/user.js";
 
 export const serializeUser = (user: IUser) => ({
   contactNumber: user.contactNumber,

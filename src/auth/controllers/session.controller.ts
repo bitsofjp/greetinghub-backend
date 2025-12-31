@@ -1,5 +1,5 @@
-import { AuthenticatedRequest } from "#middlewares/auth.middleware.js";
-import User from "#models/user.js";
+import { AuthenticatedRequest } from "#auth/middlewares/auth.middleware.js";
+import User from "#auth/models/user.js";
 import { Request, Response } from "express";
 
 interface LogoutBody {
