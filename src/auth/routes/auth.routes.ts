@@ -1,4 +1,4 @@
-import { signin, signup } from "#auth/controllers/auth.controller.js";
+import { resendVerification, signin, signup } from "#auth/controllers/auth.controller.js";
 import { googleLogin } from "#auth/controllers/google.controller.js";
 import { logout } from "#auth/controllers/logout.controller.js";
 import { changePassword, forgotPassword, resetPassword, setPassword } from "#auth/controllers/password.controller.js";
@@ -15,6 +15,7 @@ const router = Router();
 
 router.post("/signin", signinLimiter, signin);
 router.post("/signup", signupLimiter, signup);
+router.post("/resend-verification", resendVerification);
 router.post("/refresh", refreshToken);
 router.post("/logout", logout);
 
